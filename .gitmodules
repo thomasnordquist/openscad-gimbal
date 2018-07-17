@@ -1,0 +1,3 @@
+[submodule "git-hooks"]
+	path = git-hooks
+	url = git@github.com:thomasnordquist/openscad-preview-git-hooks.git
