@@ -4,8 +4,8 @@
 
 ### Screws and nuts
 -  4 x Screw M5 16mm DIN-933
-- 16 x Screw M3 16mm DIN-9771
-- 4 x M5 self-locking hex nut (DIN-985 as reference)
+- 16 x Screw M3 16mm countersunk bolt (like DIN-9771)
+-  4 x M5 self-locking hex nut (like DIN-985)
 - 16 x M3 hex nut DIN-934
 
 ### Bearings
