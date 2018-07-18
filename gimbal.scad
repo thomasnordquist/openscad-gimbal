@@ -1,5 +1,5 @@
-play=0.25;
-layerHeight=0.25;
+play=0.2;
+layerHeight=0.20;
 enableBridgeSupport=false;
 
 coreBearingOuterDiameter = 22;
@@ -84,10 +84,10 @@ module Din933Bolt(m, length, needsBridgeSupport=false) {
   threadOffset = needsBridgeSupport && enableBridgeSupport ? layerHeight : -0.01;
   union() {
     // Hex head
-    cylinder(r=outerRadius + 0.5*play, h=hexHeadDin933Thickness[m], $fn=6);
+    cylinder(r=outerRadius + 0.5*play, h=hexHeadDin933Thickness[m]+play, $fn=6);
 
     // thread
-    translate([0, 0, hexHeadDin933Thickness[m] + threadOffset]) cylinder(r=m/2 + 0.5 * play, h=length-threadOffset);
+    translate([0, 0, hexHeadDin933Thickness[m] + play + threadOffset]) cylinder(r=m/2 + 0.5 * play, h=length-threadOffset);
   }
 }
 
@@ -101,7 +101,8 @@ module clampingBolt(m, length, radius, orientation) {
   sinkHeight = headDin9771Thickness[m];
   rotate([0, 0, orientation]) translate([radius, 0, -0.01]) rotate([0, 0, 30]) {
     Din933Bolt(m, length-sinkHeight, needsBridgeSupport=true);
-    translate([0, 0, length-sinkHeight]) cylinder(r1=m/2, r2=Din9771_d2[m]/2, h=sinkHeight+0.02);
+    translate([0, 0, length-sinkHeight-play]) cylinder(r1=m/2, r2=Din9771_d2[m]/2, h=sinkHeight+0.02);
+    translate([0, 0, length-play]) cylinder(r=Din9771_d2[m]/2, h=sinkHeight);
   }
 }
 
@@ -262,10 +263,28 @@ module mountPlate() {
   }
 }
 
+module gimbalLowerHalf() {
+  enableBridgeSupport = true;
+  lowerHalf() {
+    core();
+    primaryRing();
+    secondaryRing();
+  }
+}
+
+module gimbalUpperHalf() {
+  enableBridgeSupport = false;
+  upperHalf() {
+    core();
+    primaryRing();
+    secondaryRing();
+  }
+}
+
 module preview() {
   rotate([0, 0, -45]) union() {
     rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) core();
-    rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) primaryRing();
+    rotate([39, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) primaryRing();
     rotate([2.8, 25, 10]) rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) secondaryRing(); 
   }
 }
@@ -276,12 +295,11 @@ module crosssection() {
   secondaryRing(crosssection=true); 
 }
 
-//preview();
-rotate([0, 0, -22.5])crosssection();
+preview();
+//rotate([0, 0, -22.5])crosssection();
 
-translate([0, 0, 25]) {
-  /*mount();
+/*translate([0, 0, 25]) {
+  mount();
   translate([0, 0, mountBaseHeight]) mountPlate();
   translate([0, 0, mountBaseHeight+wallThickness]) mountPlate();
-*/
-}
+}*/

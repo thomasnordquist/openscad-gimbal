@@ -12,6 +12,6 @@
 - 4 x MR105 ZZ (⌀ 10mm ext., ⌀ 5mm int., 4mm height)
 - 1 x 608 ZZ (⌀ 22mm ext., ⌀ 8mm int., 7mm height)
 
-|gimbal.scad|
-|---|
-|![gimbal.scad](images/gimbal.scad.png)|
+|gimbal-lower-half.scad|gimbal-upper-half.scad|gimbal.scad|
+|---|---|---|
+|![gimbal-lower-half.scad](images/gimbal-lower-half.scad.png)|![gimbal-upper-half.scad](images/gimbal-upper-half.scad.png)|![gimbal.scad](images/gimbal.scad.png)|
