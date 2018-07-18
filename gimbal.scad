@@ -17,8 +17,6 @@ innerThreadDiameter = 5;
 ringHeight = bearingOuterDiameter+2*wallThickness;
 $fn=32;
 
-gimbalCrosssection=false;
-
 headDin9771Thickness = [
   0,
   0, // M1
@@ -155,13 +153,13 @@ module coreBearingNegative() {
 }
 
 coreDiameter = outerOctDiameter(hexHeadDin933Thickness[5] * 2 + wallThickness * 2) + coreBearingOuterDiameter;
-module core() {
+module core(crosssection=false) {
   hexNutRadius = coreBearingOuterDiameter/2+wallThickness-1;
 
   clampAngles = [45+22.5, 180-22.5, -90-22.5, -22.5];
   clampingRadius = coreBearingOuterDiameter / 2 + wallThickness/2 + hexNutDin934Thickness[4]/2;
 
-  cylinderHeight = gimbalCrosssection ? ringHeight/2 : ringHeight;
+  cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
   difference() {
     // Ring
     cylinder(r=0.5*coreDiameter, h=cylinderHeight, $fn=8);
@@ -177,8 +175,8 @@ module core() {
 
 primaryRingInnerDiameter = coreDiameter + ringSpacing;
 primaryRingOuterDiameter = primaryRingInnerDiameter + 4*wallThickness + 2*hexHeadDin933Thickness[5];
-module primaryRing() {
-  bearingRadius = innerHexDiameter(primaryRingInnerDiameter) / 2 + bearingHeight-0.5;
+module primaryRing(crosssection=false) {
+  bearingRadius = innerHexDiameter(primaryRingInnerDiameter) / 2 + bearingHeight-0.6;
   boltRadius = innerOctDiameter(primaryRingOuterDiameter) - hexHeadDin933Thickness[5] - wallThickness;
 
   clampRadius = primaryRingInnerDiameter / 2 + wallThickness -0.66;
@@ -190,7 +188,7 @@ module primaryRing() {
     [22.5*15, clampRadius], 
   ];
 
-  cylinderHeight = gimbalCrosssection ? ringHeight/2 : ringHeight;
+  cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
   difference() {
     // Ring
     cylinder(r=primaryRingOuterDiameter/2, h = cylinderHeight, $fn=8);
@@ -211,7 +209,7 @@ module primaryRing() {
 secondaryRingInnerDiameter = primaryRingOuterDiameter + ringSpacing;
 secondaryRingOuterDiameter = secondaryRingInnerDiameter + 4*wallThickness + bearingHeight+2;
 
-module secondaryRing() {
+module secondaryRing(crosssection=false) {
   bearingRadius = innerHexDiameter(secondaryRingInnerDiameter) / 2 + bearingHeight+0.4;
 
   innerClampRadius = bearingRadius+2;
@@ -230,7 +228,7 @@ module secondaryRing() {
     [22.5*15, innerClampRadius], 
   ];
 
-  cylinderHeight = gimbalCrosssection ? ringHeight/2 : ringHeight;
+  cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
   difference() {
     // Ring
     cylinder(r=secondaryRingOuterDiameter/2, h = cylinderHeight, $fn=8);
@@ -264,16 +262,26 @@ module mountPlate() {
   }
 }
 
-/*core();
-primaryRing();
-secondaryRing();*/
-rotate([0, 0, -45]) union() {
-  rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) core();
-  rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) primaryRing();
-  rotate([2.8, 25, 10]) rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) secondaryRing(); 
+module preview() {
+  rotate([0, 0, -45]) union() {
+    rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) core();
+    rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) primaryRing();
+    rotate([2.8, 25, 10]) rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) secondaryRing(); 
+  }
 }
 
+module crosssection() {
+  core(crosssection=true);
+  primaryRing(crosssection=true);
+  secondaryRing(crosssection=true); 
+}
+
+//preview();
+rotate([0, 0, -22.5])crosssection();
+
 translate([0, 0, 25]) {
-  mount();
-  //translate([0, 0, mountBaseHeight]) mountPlate();
+  /*mount();
+  translate([0, 0, mountBaseHeight]) mountPlate();
+  translate([0, 0, mountBaseHeight+wallThickness]) mountPlate();
+*/
 }
