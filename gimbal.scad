@@ -183,10 +183,14 @@ module primaryRing(crosssection=false) {
   clampRadius = primaryRingInnerDiameter / 2 + wallThickness -0.66;
 
   clampAngles = [
-    [22.5*3, clampRadius], 
-    [22.5*7, clampRadius], 
-    [22.5*11, clampRadius], 
-    [22.5*15, clampRadius], 
+    [22.5*0, clampRadius],
+    [22.5*2, clampRadius],
+    [22.5*4, clampRadius],
+    [22.5*6, clampRadius],
+    [22.5*8, clampRadius],
+    [22.5*10, clampRadius],
+    [22.5*12, clampRadius],
+    [22.5*14, clampRadius],
   ];
 
   cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
