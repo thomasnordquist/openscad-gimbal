@@ -1,81 +1,33 @@
-play=0.2;
-layerHeight=0.20;
-enableBridgeSupport=false;
+include <lib/screw-and-nuts.scad>
 
+// Print helper setting
+play = 0.2;
+enableBridgeSupport = false;
+layerHeight = 0.20; // Layer height is used to create bridge support for holes
+
+// Core bearing dimensions
 coreBearingOuterDiameter = 22;
 coreBearingHeight=7;
 
+// Axle bearing dimensions
 bearingOuterDiameter=10;
 bearingRollerDiameter=bearingOuterDiameter-2;
 bearingHeight=4;
 
-ringSpacing=6;
+// Space between core and primary ring, primary and secondary ring
+ringSpacing = 3;
 
+// Minimal thickness for walls
 wallThickness = 3;
-bottomThickness = 3;
-innerThreadDiameter = 5;
+
 ringHeight = bearingOuterDiameter+2*wallThickness;
+
+// Things mounted on the axle that has the potential of beeing wider then the ringSpacing
+axleMountAdditionWidth = 1 /* washer */ + hexNutDin934Thickness[5];
+
+// How much of the axle mount sticks into the ring
+axleMountRingInset = max(axleMountAdditionWidth - ringSpacing, 0);
 $fn=32;
-
-headDin9771Thickness = [
-  0,
-  0, // M1
-  0, //
-  1.86,
-  2.48,
-  3.1,
-  3.72,
-  0, // NO M7
-  4.96,
-];
-
-Din9771_d2 = [
-  0,
-  0, // M1
-  0, //
-  6.72,
-  8.96,
-  10.2,
-  13.44,
-  0, // NO M7
-  17.92,
-];
-
-hexHeadDin933Thickness=[
-  0,
-  0, // M1
-  1.3,
-  2,
-  2.8,
-  3.5,
-  4,
-  4.8,
-  5.3,
-];
-
-hexNutDin934Thickness=[
-  0,
-  0, // M1
-  1.6,
-  2.4,
-  3.2,
-  4,
-  5,
-  0, // M7 not found
-  6.5
-];
-
-hexNutWidthAcrossFlats=[
-  0,
-  0, //M1
-  4,
-  5.5,
-  7,
-  8,
-  10,
-  11,
-  13
-];
 
 module Din933Bolt(m, length, needsBridgeSupport=false) {
   innerRadius = hexNutWidthAcrossFlats[m]/2;
@@ -137,12 +89,10 @@ module ZFF() {
   translate([0,0,-0.1]) scale([1, 1, 1.1]) children(0);
 }
 
-module bbNegative() {
-  translate([0, 0, -0.5*bearingHeight]) {
-    cylinder(r=0.5*bearingOuterDiameter + 0.5*play, h=bearingHeight);
-    translate([0, 0, bearingHeight-0.01]) cylinder(r=0.5*bearingOuterDiameter-2, h=2*bearingHeight);
-    translate([0, 0, -2*bearingHeight+0.01]) cylinder(r=0.5*bearingOuterDiameter-2, h=2*bearingHeight);
-  }
+module axleBearingNegative() {
+  cylinder(r=0.5*bearingOuterDiameter + 0.5*play, h=bearingHeight);
+  translate([0, 0, bearingHeight-0.01]) cylinder(r=0.5*bearingOuterDiameter-2, h=2*bearingHeight);
+  translate([0, 0, -2*bearingHeight+0.01]) cylinder(r=0.5*bearingOuterDiameter + 0.5*play, h=bearingHeight*2);
 }
 
 module coreBearingNegative() {
@@ -174,13 +124,14 @@ module core(crosssection=false) {
   }
 }
 
-primaryRingInnerDiameter = coreDiameter + ringSpacing;
-primaryRingOuterDiameter = primaryRingInnerDiameter + 4*wallThickness + 2*hexHeadDin933Thickness[5];
+primaryRingInnerDiameter = coreDiameter + 2 * ringSpacing;
+primaryRingOuterDiameter = primaryRingInnerDiameter + 4*wallThickness + 2*hexHeadDin933Thickness[5] + 2*axleMountRingInset;
 module primaryRing(crosssection=false) {
-  bearingRadius = innerHexDiameter(primaryRingInnerDiameter) / 2 + bearingHeight-0.6;
+  /* Washer + DIN-125 M5 Hex nut */
+  bearingRadius = innerHexDiameter(coreDiameter) / 2 + ringSpacing + 1 /* FIXME: not-derived-constant */ + axleMountRingInset;
   boltRadius = innerOctDiameter(primaryRingOuterDiameter) - hexHeadDin933Thickness[5] - wallThickness;
 
-  clampRadius = primaryRingInnerDiameter / 2 + wallThickness -0.66;
+  clampRadius = (primaryRingOuterDiameter+primaryRingInnerDiameter) / 2 / 2 - 0.6 /* FIXME: not-derived-constant */;
 
   clampAngles = [
     [22.5*0, clampRadius],
@@ -197,11 +148,11 @@ module primaryRing(crosssection=false) {
   difference() {
     // Ring
     cylinder(r=primaryRingOuterDiameter/2, h = cylinderHeight, $fn=8);
-    ZFF() cylinder(r=primaryRingInnerDiameter/2, h = ringHeight, $fn=8);
+    ZFF() cylinder(r=primaryRingInnerDiameter/2, h = cylinderHeight, $fn=8);
 
     // Bearings
-    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) bbNegative();
-    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 180+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) bbNegative();
+    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
+    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 180+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
 
     // Axis bolts
     translate([0, 0, ringHeight*0.5]) rotate([30, 0, 90+22.5]) rotate([0, -90, 0]) translate([0, 0, boltRadius]) Din933Bolt(5, 20);
@@ -211,7 +162,7 @@ module primaryRing(crosssection=false) {
   }
 }
 
-secondaryRingInnerDiameter = primaryRingOuterDiameter + ringSpacing;
+secondaryRingInnerDiameter = primaryRingOuterDiameter + 2 * ringSpacing;
 secondaryRingOuterDiameter = secondaryRingInnerDiameter + 4*wallThickness + bearingHeight+2;
 
 module secondaryRing(crosssection=false) {
@@ -240,8 +191,8 @@ module secondaryRing(crosssection=false) {
     ZFF() cylinder(r=secondaryRingInnerDiameter/2, h = ringHeight, $fn=8);
 
     // Bearings
-    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 90+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) bbNegative();
-    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 270+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) bbNegative();
+    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 90+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
+    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 270+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
 
     for (tuple=clampAngles) clampingBolt(3, ringHeight, tuple[1], tuple[0]);
   }
