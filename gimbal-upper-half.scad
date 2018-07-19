@@ -1,3 +1,3 @@
-include <gimbal.scad>
+use <gimbal.scad>
 
 gimbalUpperHalf();
