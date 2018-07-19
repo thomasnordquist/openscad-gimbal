@@ -20,7 +20,9 @@ ringSpacing = 3;
 // Minimal thickness for walls
 wallThickness = 3;
 
-ringHeight = bearingOuterDiameter+2*wallThickness;
+// Extra height for stability
+ringExtraHeight = 1;
+ringHeight = bearingOuterDiameter + 2*wallThickness + ringExtraHeight;
 
 // Things mounted on the axle that has the potential of beeing wider then the ringSpacing
 axleMountAdditionWidth = 1 /* washer */ + hexNutDin934Thickness[5];
@@ -34,7 +36,7 @@ module Din933Bolt(m, length, needsBridgeSupport=false) {
   outerRadius = outerHexDiameter(innerRadius*2)/2;
 
   threadOffset = needsBridgeSupport && enableBridgeSupport ? layerHeight : -0.01;
-  union() {
+  color("lightgrey") union() {
     // Hex head
     cylinder(r=outerRadius + 0.5*play, h=hexHeadDin933Thickness[m]+play, $fn=6);
 
@@ -45,13 +47,15 @@ module Din933Bolt(m, length, needsBridgeSupport=false) {
 
 module Din934HexBolt(m, length) {
   diameter = outerHexDiameter(hexNutWidthAcrossFlats[m]);
-  cylinder(r=diameter / 2 + play / 2, h=hexNutDin934Thickness[m], $fn=6);
-  translate([0, 0, hexNutDin934Thickness[m]-0.01]) cylinder(r=m/2+play/2, h=length-hexNutDin934Thickness[m]+0.02);
+  color("lightgrey") {
+    cylinder(r=diameter / 2 + play / 2, h=hexNutDin934Thickness[m], $fn=6);
+    translate([0, 0, hexNutDin934Thickness[m]-0.01]) cylinder(r=m/2+play/2, h=length-hexNutDin934Thickness[m]+0.02);
+  }
 }
 
 module clampingBolt(m, length, radius, orientation) {
   sinkHeight = headDin9771Thickness[m];
-  rotate([0, 0, orientation]) translate([radius, 0, -0.01]) rotate([0, 0, 30]) {
+  color("lightgrey") rotate([0, 0, orientation]) translate([radius, 0, -0.01]) rotate([0, 0, 30]) {
     Din933Bolt(m, length-sinkHeight, needsBridgeSupport=true);
     translate([0, 0, length-sinkHeight-play]) cylinder(r1=m/2, r2=Din9771_d2[m]/2, h=sinkHeight+0.02);
     translate([0, 0, length-play]) cylinder(r=Din9771_d2[m]/2, h=sinkHeight);
@@ -67,8 +71,8 @@ module lowerHalf() {
   }
 }
 
-module upperHalf() {
-  translate([0, 0, ringHeight]) mirror([0, 0, 1]) difference() {
+module upperHalf(mirrored=true) {
+  translate([0, 0, mirrored ? ringHeight : 0]) mirror([0, 0, mirrored ? 1 : 0]) difference() {
     union() {
       children();
     };
@@ -82,7 +86,7 @@ function outerHexDiameter(innerDiameter) = ((innerDiameter/2) / (sqrt(3) / 2)) *
 function aOfOctagonForDiameter(outerDiameter) = outerDiameter / sqrt(4+2*sqrt(2));
 function aOfOctagonForInnerDiameter(innerDiameter) = innerDiameter / 2 * (1 + sqrt(2));
 
-function innerOctDiameter(outerDiameter) = aOfOctagonForDiameter(outerDiameter) / 2 * (1 + sqrt(2));
+function innerOctDiameter(outerDiameter) = aOfOctagonForDiameter(outerDiameter) * (1 + sqrt(2));
 function outerOctDiameter(innerDiameter) = aOfOctagonForInnerDiameter(innerDiameter) / 2 * sqrt(4+2*sqrt(2));
 
 module ZFF() {
@@ -90,13 +94,19 @@ module ZFF() {
 }
 
 module axleBearingNegative() {
-  cylinder(r=0.5*bearingOuterDiameter + 0.5*play, h=bearingHeight);
-  translate([0, 0, bearingHeight-0.01]) cylinder(r=0.5*bearingOuterDiameter-2, h=2*bearingHeight);
-  translate([0, 0, -2*bearingHeight+0.01]) cylinder(r=0.5*bearingOuterDiameter + 0.5*play, h=bearingHeight*2);
+  color("lightgrey") {
+    cylinder(r=0.5*bearingOuterDiameter + 0.5*play, h=bearingHeight);
+    bearingCasingWidth = 1.5;
+    translate([0, 0, bearingHeight-0.01]) cylinder(r=0.5*bearingOuterDiameter - bearingCasingWidth, h=2*bearingHeight);
+  }
+  
+  // M5 hex nut inset, does not bear any load
+  m5NutDiameter = outerHexDiameter(hexNutWidthAcrossFlats[5])+2*play;
+  color("grey") translate([0, 0, -2*bearingHeight+0.01]) cylinder(r=m5NutDiameter/2, h=bearingHeight*2);
 }
 
 module coreBearingNegative() {
-  translate([0, 0, -0.5*coreBearingHeight]) {
+  color("lightgrey") translate([0, 0, -0.5*coreBearingHeight]) {
     cylinder(r=0.5*coreBearingOuterDiameter + 0.5*play, h=coreBearingHeight);
     translate([0, 0, coreBearingHeight-0.01]) cylinder(r=0.5*coreBearingOuterDiameter-2, h=2*coreBearingHeight);
     translate([0, 0, -2*coreBearingHeight+0.01]) cylinder(r=0.5*coreBearingOuterDiameter-2, h=2*coreBearingHeight);
@@ -129,19 +139,19 @@ primaryRingOuterDiameter = primaryRingInnerDiameter + 4*wallThickness + 2*hexHea
 module primaryRing(crosssection=false) {
   /* Washer + DIN-125 M5 Hex nut */
   bearingRadius = innerHexDiameter(coreDiameter) / 2 + ringSpacing + 1 /* FIXME: not-derived-constant */ + axleMountRingInset;
-  boltRadius = innerOctDiameter(primaryRingOuterDiameter) - hexHeadDin933Thickness[5] - wallThickness;
+  boltRadius = innerOctDiameter(primaryRingOuterDiameter)/2 - hexHeadDin933Thickness[5] - wallThickness;
 
   clampRadius = (primaryRingOuterDiameter+primaryRingInnerDiameter) / 2 / 2 - 0.6 /* FIXME: not-derived-constant */;
 
   clampAngles = [
-    [22.5*0, clampRadius],
-    [22.5*2, clampRadius],
-    [22.5*4, clampRadius],
-    [22.5*6, clampRadius],
-    [22.5*8, clampRadius],
-    [22.5*10, clampRadius],
-    [22.5*12, clampRadius],
-    [22.5*14, clampRadius],
+    22.5*0,
+    22.5*2,
+    22.5*4,
+    22.5*6,
+    22.5*8,
+    22.5*10,
+    22.5*12,
+    22.5*14,
   ];
 
   cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
@@ -158,30 +168,26 @@ module primaryRing(crosssection=false) {
     translate([0, 0, ringHeight*0.5]) rotate([30, 0, 90+22.5]) rotate([0, -90, 0]) translate([0, 0, boltRadius]) Din933Bolt(5, 20);
     translate([0, 0, ringHeight*0.5]) rotate([30, 0, 270+22.5]) rotate([0, -90, 0]) translate([0, 0, boltRadius]) Din933Bolt(5, 20);
 
-    for (tuple=clampAngles) clampingBolt(3, ringHeight, tuple[1], tuple[0]);
+    for (angle=clampAngles) clampingBolt(3, ringHeight, clampRadius, angle);
   }
 }
 
 secondaryRingInnerDiameter = primaryRingOuterDiameter + 2 * ringSpacing;
-secondaryRingOuterDiameter = secondaryRingInnerDiameter + 4*wallThickness + bearingHeight+2;
+secondaryRingOuterDiameter = secondaryRingInnerDiameter + 4*wallThickness + bearingHeight+2 + axleMountRingInset*2;
 
 module secondaryRing(crosssection=false) {
-  bearingRadius = innerHexDiameter(secondaryRingInnerDiameter) / 2 + bearingHeight+0.4;
-
-  innerClampRadius = bearingRadius+2;
-  outerClampRadius = bearingRadius+3.7;
-  clampRadius = bearingRadius+1.5;
+  bearingRadius = innerOctDiameter(secondaryRingInnerDiameter)/2 + axleMountRingInset;
+  clampRadius = bearingRadius+6;
 
   clampAngles = [
-    [22.5*4.3, outerClampRadius],
-    [22.5*5.7, outerClampRadius],
-    [22.5*4.3 + 180, outerClampRadius],
-    [22.5*5.7 + 180, outerClampRadius],
-
-    [22.5*3, innerClampRadius], 
-    [22.5*7, innerClampRadius], 
-    [22.5*11, innerClampRadius], 
-    [22.5*15, innerClampRadius], 
+    22.5*0,
+    22.5*2,
+    22.5*4,
+    22.5*6,
+    22.5*8,
+    22.5*10,
+    22.5*12,
+    22.5*14,
   ];
 
   cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
@@ -194,7 +200,7 @@ module secondaryRing(crosssection=false) {
     translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 90+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
     translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 270+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
 
-    for (tuple=clampAngles) clampingBolt(3, ringHeight, tuple[1], tuple[0]);
+    for (angle=clampAngles) clampingBolt(3, ringHeight, clampRadius, angle);
   }
 }
 
@@ -238,18 +244,24 @@ module gimbalUpperHalf() {
 
 module preview() {
   rotate([0, 0, -45]) union() {
-    rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) core();
+    rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) {
+      core();
+    }
     rotate([39, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) primaryRing();
-    rotate([2.8, 25, 10]) rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) secondaryRing(); 
+    rotate([2.8, 25, 10]) rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) {
+      lowerHalf() secondaryRing();
+      %upperHalf(mirrored=false) secondaryRing();
+    }
+
   }
 }
 
 module crosssection() {
   core(crosssection=true);
   primaryRing(crosssection=true);
-  secondaryRing(crosssection=true); 
+  secondaryRing(crosssection=true);
 }
-
+//crosssection();
 preview();
 //rotate([0, 0, -22.5])crosssection();
 
