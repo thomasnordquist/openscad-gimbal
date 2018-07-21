@@ -45,21 +45,28 @@ module Din933Bolt(m, length, needsBridgeSupport=false) {
   }
 }
 
-module Din934HexBolt(m, length) {
+module Din934HexBolt(m, length, needsBridgeSupport=false, headExtraPenetratingHeight=0) {
+  // headExtraPenetratingHeight add height to the head so it can be subtracted to create deep pockets
   diameter = outerHexDiameter(hexNutWidthAcrossFlats[m]);
+  threadOffset = needsBridgeSupport && enableBridgeSupport ? layerHeight : -0.01;
+
   color("lightgrey") {
-    cylinder(r=diameter / 2 + play / 2, h=hexNutDin934Thickness[m], $fn=6);
-    translate([0, 0, hexNutDin934Thickness[m]-0.01]) cylinder(r=m/2+play/2, h=length-hexNutDin934Thickness[m]+0.02);
+    translate([0, 0, -headExtraPenetratingHeight]) cylinder(r=diameter / 2 + play / 2, h=hexNutDin934Thickness[m]+headExtraPenetratingHeight, $fn=6);
+    translate([0, 0, hexNutDin934Thickness[m]+threadOffset]) cylinder(r=m/2+play/2, h=length-hexNutDin934Thickness[m]-threadOffset+0.02);
   }
 }
 
-module clampingBolt(m, length, radius, orientation) {
+module clampingBolt(m, length, radius, orientation, headExtraPenetratingHeight=0) {
   sinkHeight = headDin9771Thickness[m];
   color("lightgrey") rotate([0, 0, orientation]) translate([radius, 0, -0.01]) rotate([0, 0, 30]) {
     Din933Bolt(m, length-sinkHeight, needsBridgeSupport=true);
     translate([0, 0, length-sinkHeight-play]) cylinder(r1=m/2, r2=Din9771_d2[m]/2, h=sinkHeight+0.02);
-    translate([0, 0, length-play]) cylinder(r=Din9771_d2[m]/2, h=sinkHeight);
+    translate([0, 0, length-play]) cylinder(r=Din9771_d2[m]/2, h=sinkHeight+headExtraPenetratingHeight);
   }
+}
+
+module hole(diameter, radius, orientation, length) {
+  rotate([0, 0, orientation]) translate([radius, 0, 0]) cylinder(r=diameter/2, h=length);
 }
 
 module lowerHalf() {
@@ -67,7 +74,7 @@ module lowerHalf() {
     union() {
       children();
     };
-    translate([0, 0, ringHeight/2]) cylinder(r=1000, h=0.5*ringHeight+0.01);
+    translate([0, 0, ringHeight/2]) cylinder(r=1000, h=5*ringHeight);
   }
 }
 
@@ -76,7 +83,7 @@ module upperHalf(mirrored=true) {
     union() {
       children();
     };
-    translate([0, 0, -0.1]) cylinder(r=1000, h=0.5*ringHeight+0.01);
+    translate([0, 0, -5*ringHeight]) cylinder(r=1000, h=5*ringHeight+0.5*ringHeight+0.01);
   }
 }
 
@@ -177,8 +184,12 @@ secondaryRingOuterDiameter = secondaryRingInnerDiameter + 4*wallThickness + bear
 
 module secondaryRing(crosssection=false) {
   bearingRadius = innerOctDiameter(secondaryRingInnerDiameter)/2 + axleMountRingInset;
+  bearingLocations = [
+    90+22.5,
+    270+22.5
+  ];
+  
   clampRadius = bearingRadius+6;
-
   clampAngles = [
     22.5*0,
     22.5*2,
@@ -189,6 +200,12 @@ module secondaryRing(crosssection=false) {
     22.5*12,
     22.5*14,
   ];
+  
+  boltRadius = innerOctDiameter(secondaryRingInnerDiameter)/2;
+  boltLocations = [
+    180+22.5,
+    22.5
+  ];
 
   cylinderHeight = crosssection ? ringHeight/2 : ringHeight;
   difference() {
@@ -197,31 +214,17 @@ module secondaryRing(crosssection=false) {
     ZFF() cylinder(r=secondaryRingInnerDiameter/2, h = ringHeight, $fn=8);
 
     // Bearings
-    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 90+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
-    translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, 270+22.5]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
+    for (angle = bearingLocations) 
+      translate([0, 0, 0.5 * ringHeight ]) rotate([0, 0, angle]) rotate([0, -90]) translate([0, 0, bearingRadius]) axleBearingNegative();
 
     for (angle=clampAngles) clampingBolt(3, ringHeight, clampRadius, angle);
+    for (angle=boltLocations) rotate([0, 0, angle]) translate([boltRadius-0.01, 0, 0.5*ringHeight]) rotate([0, 90]) rotate([0, 0, 90]) Din933Bolt(5, 20);
   }
 }
 
 translate([0, 0, -ringHeight-5]) {
   //core();
   //cylinder(r=4, h=3*ringHeight);
-}
-
-mountBaseHeight = wallThickness+hexNutDin934Thickness[8];
-module mount() {
-  difference() {
-    cylinder(r=coreDiameter/3, h=mountBaseHeight);
-    ZFF() translate([0, 0, mountBaseHeight]) mirror([0, 0, 1]) Din934HexBolt(8, 20);
-  }
-}
-
-module mountPlate() {
-  difference() {
-    cylinder(r=coreDiameter/3, h=wallThickness);
-    ZFF() cylinder(r=4+play/2, h=wallThickness);
-  }
 }
 
 module gimbalLowerHalf() {
@@ -256,6 +259,26 @@ module preview() {
   }
 }
 
+module handle() {
+  angle = 70;
+  mountHeight=ringHeight*1.25;
+  mountWidth=mountHeight;
+  difference() {
+    cube([wallThickness+bearingHeight, mountWidth, mountHeight]);
+    
+    // Subtract bearing
+    translate([wallThickness+bearingHeight, 0.5*mountHeight, 0.5*mountHeight]) rotate([0, -90, 0]) axleBearingNegative();
+  }
+  hull() {
+    translate([0, -1, 0]) cube([wallThickness+bearingHeight, 1, mountHeight]);
+    rotate([0, 0, -angle]) translate([0, -10, 0]) cube([wallThickness+bearingHeight, 1, mountHeight]);
+  }
+  //rotate([]) cylinder(r=15, h=20);
+
+}
+
+//handle();
+
 module crosssection() {
   core(crosssection=true);
   primaryRing(crosssection=true);
@@ -265,8 +288,12 @@ module crosssection() {
 preview();
 //rotate([0, 0, -22.5])crosssection();
 
-/*translate([0, 0, 25]) {
+//preview();
+/*translate([0, 0, 25]) cube([1, 1, 1]);
+translate([0, 0, 0]) {
   mount();
-  translate([0, 0, mountBaseHeight]) mountPlate();
-  translate([0, 0, mountBaseHeight+wallThickness]) mountPlate();
 }*/
+
+//enableBridgeSupport=true;
+//upperHalf() secondaryRing();
+//upperHalf(mirrored=false) mount();
