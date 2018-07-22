@@ -1,4 +1,4 @@
-include <lib/screw-and-nuts.scad>
+include <screw-and-nuts.scad>
 
 // Print helper setting
 play = 0.2;
@@ -245,47 +245,12 @@ module gimbalUpperHalf() {
   }
 }
 
-module preview() {
-  rotate([0, 0, -45]) union() {
-    rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) {
-      core();
-    }
-    rotate([39, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) primaryRing();
-    rotate([2.8, 25, 10]) rotate([20, 0, 0]) rotate([0, 0, -22.5]) translate([0, 0, -0.5 * ringHeight]) {
-      lowerHalf() secondaryRing();
-      %upperHalf(mirrored=false) secondaryRing();
-    }
-
-  }
-}
-
-module handle() {
-  angle = 70;
-  mountHeight=ringHeight*1.25;
-  mountWidth=mountHeight;
-  difference() {
-    cube([wallThickness+bearingHeight, mountWidth, mountHeight]);
-    
-    // Subtract bearing
-    translate([wallThickness+bearingHeight, 0.5*mountHeight, 0.5*mountHeight]) rotate([0, -90, 0]) axleBearingNegative();
-  }
-  hull() {
-    translate([0, -1, 0]) cube([wallThickness+bearingHeight, 1, mountHeight]);
-    rotate([0, 0, -angle]) translate([0, -10, 0]) cube([wallThickness+bearingHeight, 1, mountHeight]);
-  }
-  //rotate([]) cylinder(r=15, h=20);
-
-}
-
-//handle();
-
 module crosssection() {
   core(crosssection=true);
   primaryRing(crosssection=true);
   secondaryRing(crosssection=true);
 }
 //crosssection();
-preview();
 //rotate([0, 0, -22.5])crosssection();
 
 //preview();

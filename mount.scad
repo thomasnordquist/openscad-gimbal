@@ -1,4 +1,4 @@
-include <gimbal.scad>
+include <lib/gimbal.scad>
 mountBaseHeight = ringHeight;
 mountDiameter = coreDiameter / 2.7;
 
