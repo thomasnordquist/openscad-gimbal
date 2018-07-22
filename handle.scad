@@ -6,12 +6,12 @@ module handle() {
   mountWidth=mountHeight;
   difference() {
     cube([wallThickness+bearingHeight, mountWidth, mountHeight]);
-    
     // Subtract bearing
     //translate([wallThickness+bearingHeight, 0.5*mountHeight, 0.5*mountHeight]) rotate([0, -90, 0]) axleBearingNegative();
     translate([wallThickness+bearingHeight, 0.5*mountHeight, 0.5*mountHeight]) rotate([0, -90, 0]) cylinder(r=2.8, h=20);
   }
-    gripDiameter=30;
+  
+  gripDiameter=30;
   hull() {
     translate([0, -1, 0]) cube([wallThickness+bearingHeight, 1, mountHeight]);
     rotate([0, 0, -angle]) translate([0, -10, 0]) cube([wallThickness+bearingHeight, 1, mountHeight]);

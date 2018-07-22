@@ -222,43 +222,9 @@ module secondaryRing(crosssection=false) {
   }
 }
 
-translate([0, 0, -ringHeight-5]) {
-  //core();
-  //cylinder(r=4, h=3*ringHeight);
-}
-
-module gimbalLowerHalf() {
-  enableBridgeSupport = true;
-  lowerHalf() {
-    core();
-    primaryRing();
-    secondaryRing();
-  }
-}
-
-module gimbalUpperHalf() {
-  enableBridgeSupport = false;
-  upperHalf() {
-    core();
-    primaryRing();
-    secondaryRing();
-  }
-}
-
 module crosssection() {
   core(crosssection=true);
   primaryRing(crosssection=true);
   secondaryRing(crosssection=true);
 }
 //crosssection();
-//rotate([0, 0, -22.5])crosssection();
-
-//preview();
-/*translate([0, 0, 25]) cube([1, 1, 1]);
-translate([0, 0, 0]) {
-  mount();
-}*/
-
-//enableBridgeSupport=true;
-//upperHalf() secondaryRing();
-//upperHalf(mirrored=false) mount();
